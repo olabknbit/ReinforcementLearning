@@ -32,27 +32,36 @@ class Bandit:
 
 
 class Q:
-    def __init__(self):
+    def __init__(self, alfa=0.0):
         self.qn = 0
         self.rn = 0
         self.n_tries = 0
+        self.alfa = alfa
 
     def add_try(self, reward):
         self.qn = self.get_mean_reward()
         self.rn = reward
         self.n_tries += 1
 
+    def is_stationary(self):
+        return self.alfa != 0.0
+
     def get_mean_reward(self):
         if self.n_tries == 0:
             return self.rn
         else:
-            return self.qn + ((1 / self.n_tries) * (self.rn - self.qn))
+            if self.is_stationary():
+                alfa = 1 / self.n_tries
+            else:
+                alfa = self.alfa
+            return self.qn + (alfa * (self.rn - self.qn))
 
 
 class Agent:
-    def __init__(self, epsilon, strategy='simple'):
+    def __init__(self, epsilon, strategy='simple', alfa=0.0):
         self.epsilon = epsilon
         self.strategy = strategy
+        self.alfa = alfa
 
     def should_explore(self):
         if random.random() < self.epsilon:
@@ -66,9 +75,9 @@ class Agent:
                 best_index = index
         return best_index
 
-    def simple(self, bandit, n_tries):
+    def simple(self, bandit, n_tries, alfa=0.0):
         n_arms = len(bandit)
-        qs = [Q() for _ in range(n_arms)]
+        qs = [Q(alfa=alfa) for _ in range(n_arms)]
         reward_sum = 0.0
         for i in range(n_tries):
             # exploration vs greediness
@@ -81,9 +90,17 @@ class Agent:
             reward_sum += reward
         return reward_sum
 
+    def stationary(self, bandit, n_tries):
+        return self.simple(bandit, n_tries)
+
+    def not_stationary(self, bandit, n_tries, alfa):
+        return self.simple(bandit, n_tries, alfa=alfa)
+
     def solve(self, bandit, n_tries):
-        if self.strategy == 'simple':
-            return self.simple(bandit, n_tries)
+        if self.strategy is 'stationary':
+            return self.stationary(bandit, n_tries)
+        elif self.strategy is 'not_stationary':
+            return self.not_stationary(bandit, n_tries, self.alfa)
         return 0.0
 
 
@@ -104,19 +121,19 @@ def episode(agent, bandit_reward_f):
     return rewards
 
 
-def run(strategy='simple'):
-    n = 200
+def run(strategy):
+    n = 1
     epsilon = 0.1
     sum_r = 0.0
     for i in range(n):
         random.seed(i)
         np.random.seed(i)
-        agent = Agent(epsilon, strategy=strategy)
+        agent = Agent(epsilon, strategy=strategy, alfa=0.1)
         r = episode(agent, normal)
         sum_r += r
     print("strategy=%s, epsilon=%.3f, mean_rewards=%.3f, n=%d" % (strategy, epsilon, (sum_r / n), n))
 
 
 if __name__ == "__main__":
-    for strategy in ['simple']:
+    for strategy in ['stationary', 'not_stationary']:
         run(strategy)
