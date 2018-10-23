@@ -79,7 +79,7 @@ class Agent:
 
 
 def play(epsilon=0.1):
-    bandit = Bandit([Arm([Action(0.5, 0.1), Action(0.5, 0.9)]), Arm([Action(0.5, 0.2), Action(0.5, 0.8)])])
+    bandit = Bandit([Arm([Action(0.5, 0.1), Action(0.5, 0.8)]), Arm([Action(0.5, 0.2), Action(0.5, 0.9)])])
 
     agent = Agent(epsilon)
 
