@@ -1,10 +1,10 @@
 import random
-
+import numpy as np
 
 class Action:
-    def __init__(self, prob, reward):
+    def __init__(self, prob, reward_system):
         self.prob = prob
-        self.reward = reward
+        self.reward_system = reward_system
 
 
 class Arm:
@@ -17,7 +17,7 @@ class Arm:
         for action in self.actions:
             acc += action.prob
             if acc > x:
-                return action.reward
+                return action.reward_system()
 
         # should never occur
         return 0.0
@@ -50,8 +50,9 @@ class Q:
 
 
 class Agent:
-    def __init__(self, epsilon):
+    def __init__(self, epsilon, strategy='simple'):
         self.epsilon = epsilon
+        self.strategy = strategy
 
     def should_explore(self):
         if random.random() < self.epsilon:
@@ -65,7 +66,7 @@ class Agent:
                 best_index = index
         return best_index
 
-    def solve(self, bandit, n_tries):
+    def simple(self, bandit, n_tries):
         n_arms = len(bandit)
         qs = [Q() for _ in range(n_arms)]
         reward_sum = 0.0
@@ -78,28 +79,44 @@ class Agent:
             reward = bandit.arms[arm_index].pull()
             qs[arm_index].add_try(reward)
             reward_sum += reward
-
         return reward_sum
 
+    def solve(self, bandit, n_tries):
+        if self.strategy == 'simple':
+            return self.simple(bandit, n_tries)
+        return 0.0
 
-def play(epsilon=0.1):
-    bandit = Bandit([Arm([Action(0.5, 0.1), Action(0.5, 0.8)]), Arm([Action(0.5, 0.2), Action(0.5, 0.9)])])
 
-    agent = Agent(epsilon)
+def normal(reward):
+    return lambda: np.random.normal(reward, 1)
+
+
+def identity(reward):
+    return lambda: reward
+
+
+def episode(agent, bandit_reward_f):
+    bandit = Bandit(
+        [Arm([Action(0.5, bandit_reward_f(0.1)), Action(0.5, bandit_reward_f(0.8))]),
+         Arm([Action(0.5, bandit_reward_f(0.2)), Action(0.5, bandit_reward_f(0.9))])])
 
     rewards = agent.solve(bandit, 1000)
     return rewards
 
 
-if __name__ == "__main__":
+def run(strategy='simple'):
     n = 200
+    epsilon = 0.1
+    sum_r = 0.0
+    for i in range(n):
+        random.seed(i)
+        np.random.seed(i)
+        agent = Agent(epsilon, strategy=strategy)
+        r = episode(agent, normal)
+        sum_r += r
+    print("strategy=%s, epsilon=%.3f, mean_rewards=%.3f, n=%d" % (strategy, epsilon, (sum_r / n), n))
 
-    e_range = 100
-    for e in range(e_range):
-        epsilon = (e + 1) / e_range
-        sum_r = 0.0
-        for i in range(n):
-            random.seed(i)
-            r = play(epsilon=epsilon)
-            sum_r +=r
-        print("epsilon=%.3f, mean_rewards=%.3f, n=%d" %(epsilon, (sum_r / n), n))
+
+if __name__ == "__main__":
+    for strategy in ['simple']:
+        run(strategy)
