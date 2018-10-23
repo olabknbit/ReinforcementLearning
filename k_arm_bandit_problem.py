@@ -32,18 +32,21 @@ class Bandit:
 
 
 class Q:
-    def __init__(self, reward):
-        self.rewards = reward
+    def __init__(self):
+        self.qn = 0
+        self.rn = 0
         self.n_tries = 0
 
     def add_try(self, reward):
-        self.rewards += reward
+        self.qn = self.get_mean_reward()
+        self.rn = reward
         self.n_tries += 1
 
     def get_mean_reward(self):
         if self.n_tries == 0:
-            return self.rewards
-        return self.rewards / self.n_tries
+            return self.rn
+        else:
+            return self.qn + ((1 / self.n_tries) * (self.rn - self.qn))
 
 
 class Agent:
@@ -64,7 +67,8 @@ class Agent:
 
     def solve(self, bandit, n_tries):
         n_arms = len(bandit)
-        qs = [Q(0) for _ in range(n_arms)]
+        qs = [Q() for _ in range(n_arms)]
+        reward_sum = 0.0
         for i in range(n_tries):
             # exploration vs greediness
             if self.should_explore():
@@ -73,9 +77,9 @@ class Agent:
                 arm_index = self.get_best_arm_index(qs)
             reward = bandit.arms[arm_index].pull()
             qs[arm_index].add_try(reward)
+            reward_sum += reward
 
-        sum_qs = sum([q.rewards for q in qs])
-        return sum_qs
+        return reward_sum
 
 
 def play(epsilon=0.1):
