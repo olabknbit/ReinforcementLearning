@@ -1,4 +1,7 @@
-Problem. Załóżmy, że mamy do czynienia z 2-rękim
+# Strategia i poszukiwanie strategii w sytuacji zmienności kontekstu akcji
+
+##Problem. 
+Załóżmy, że mamy do czynienia z 2-rękim
 bandytą, który zmienia wartości akcji (action value)
 przypadkowo z kroku na krok. Na przykład, w czasie t
 wartości akcji 1 i 2 będą odpowiednio 0.1 i 0.2 z
