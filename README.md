@@ -1,6 +1,6 @@
 # Strategia i poszukiwanie strategii w sytuacji zmienności kontekstu akcji
 
-##Problem. 
+## Problem. 
 
 Załóżmy, że mamy do czynienia z 2-rękim
 bandytą, który zmienia wartości akcji (action value)
